@@ -2,200 +2,487 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="theme-color" content="#0b1020">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0b1020">
+<title>UTC Clock</title>
 
-    <title>Berlin Clock</title>
-
-    <style>
-        * {
-            box-sizing: border-box;
-        }
-
-        body {
-            margin: 0;
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 24px;
-            font-family: Arial, sans-serif;
-            color: #f5f7ff;
-            background: #0b1020;
-        }
-
-        main {
-            width: 100%;
-            max-width: 700px;
-            text-align: center;
-        }
-
-        .label {
-            color: #8da2c9;
-            font-size: 14px;
-            letter-spacing: 3px;
-            text-transform: uppercase;
-        }
-
-        h1 {
-            margin: 18px 0 8px;
-            font-size: clamp(56px, 13vw, 100px);
-            font-weight: 700;
-            letter-spacing: -4px;
-            font-variant-numeric: tabular-nums;
-        }
-
-        #date {
-            color: #b8c4dc;
-            font-size: 18px;
-            margin-bottom: 40px;
-        }
-
-        .history {
-            text-align: left;
-            background: #131b30;
-            border: 1px solid #26334f;
-            border-radius: 16px;
-            padding: 22px;
-        }
-
-        .history h2 {
-            font-size: 17px;
-            font-weight: 600;
-            margin: 0 0 16px;
-        }
-
-        #history-list {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-        }
-
-        #history-list li {
-            display: flex;
-            justify-content: space-between;
-            gap: 12px;
-            padding: 12px 0;
-            border-bottom: 1px solid #26334f;
-            color: #b8c4dc;
-            font-size: 14px;
-        }
-
-        #history-list li:first-child {
-            color: #ffffff;
-        }
-
-        #history-list li:last-child {
-            border-bottom: none;
-        }
-
-        .time {
-            font-family: monospace;
-            font-size: 16px;
-            font-variant-numeric: tabular-nums;
-        }
-
-        footer {
-            margin-top: 24px;
-            color: #7182a4;
-            font-size: 12px;
-        }
-    </style>
+<style>
+*{box-sizing:border-box}
+body{
+    margin:0;min-height:100vh;padding:22px;
+    display:grid;place-items:center;
+    background:#0b1020;color:#f5f7ff;
+    font-family:Arial,sans-serif
+}
+main{width:100%;max-width:760px;text-align:center}
+.eyebrow{
+    color:#8da2c9;font-size:13px;
+    letter-spacing:3px;text-transform:uppercase
+}
+h1{
+    margin:18px 0 8px;
+    font-size:clamp(52px,12vw,100px);
+    letter-spacing:-4px;font-weight:700;
+    font-variant-numeric:tabular-nums
+}
+#date{color:#b8c4dc;margin-bottom:28px;font-size:17px}
+.panel{
+    margin-top:18px;padding:22px;text-align:left;
+    background:#131b30;border:1px solid #26334f;
+    border-radius:16px
+}
+label,.section-title{
+    display:block;margin-bottom:12px;
+    font-size:14px;font-weight:bold
+}
+select{
+    width:100%;padding:13px;
+    border:1px solid #405477;border-radius:9px;
+    background:#0b1020;color:white;font-size:15px
+}
+.status{
+    display:flex;align-items:center;justify-content:center;
+    gap:9px;margin-top:20px;font-size:13px;color:#b8c4dc
+}
+.dot{
+    width:9px;height:9px;flex-shrink:0;
+    border-radius:50%;background:#eab308
+}
+.dot.online{background:#22c55e}
+.dot.offline{background:#ef4444}
+#sync-info{
+    margin-top:8px;color:#8da2c9;font-size:12px;line-height:1.8
+}
+#history{list-style:none;margin:0;padding:0}
+#history li{
+    display:flex;justify-content:space-between;gap:12px;
+    padding:11px 0;border-bottom:1px solid #26334f;
+    color:#b8c4dc;font-size:13px
+}
+#history li:last-child{border-bottom:none}
+.time{
+    color:white;font-family:monospace;font-size:15px;
+    font-variant-numeric:tabular-nums
+}
+footer{
+    margin-top:22px;color:#7182a4;
+    font-size:12px;line-height:1.8
+}
+@media(max-width:450px){
+    body{padding:14px}
+    h1{letter-spacing:-2px}
+    .panel{padding:17px}
+}
+</style>
 </head>
 
 <body>
-    <main>
-        <div class="label">Berlin · Germany</div>
+<main>
+    <div class="eyebrow" id="zone-label">UTC Clock</div>
+    <h1 id="clock">--:--:--</h1>
+    <div id="date">Warte auf UTC-Synchronisierung …</div>
 
-        <h1 id="clock">--:--:--</h1>
+    <section class="panel">
+        <label for="timezone">Zeitzone auswählen</label>
+        <select id="timezone"></select>
+    </section>
 
-        <div id="date">Datum wird geladen …</div>
+    <div class="status">
+        <span class="dot" id="dot"></span>
+        <span id="status">Zeitserver werden abgefragt …</span>
+    </div>
+    <div id="sync-info">Noch nicht synchronisiert</div>
 
-        <section class="history">
-            <h2>Vergangene Uhrzeiten</h2>
-            <ul id="history-list">
-                <li>Warte auf die Uhrzeit …</li>
-            </ul>
-        </section>
+    <section class="panel">
+        <div class="section-title">Vergangene Uhrzeiten</div>
+        <ul id="history">
+            <li>Warte auf Synchronisierung …</li>
+        </ul>
+    </section>
 
-        <footer>
-            Zeitzone: Europe/Berlin · Aktualisierung jede Sekunde
-        </footer>
-    </main>
+    <footer>
+        UTC-Zeit aus dem Internet · Synchronisierung jede Minute<br>
+        Die PC-Uhr wird nicht als Zeitquelle verwendet.
+    </footer>
+</main>
 
-    <script>
-        const timeFormatter = new Intl.DateTimeFormat("de-DE", {
-            timeZone: "Europe/Berlin",
-            hour: "2-digit",
-            minute: "2-digit",
-            second: "2-digit",
-            hourCycle: "h23"
+<script>
+"use strict";
+
+const $ = id => document.getElementById(id);
+
+const clock = $("clock");
+const date = $("date");
+const timezone = $("timezone");
+const zoneLabel = $("zone-label");
+const status = $("status");
+const dot = $("dot");
+const syncInfo = $("sync-info");
+const historyList = $("history");
+
+const SYNC_INTERVAL = 60_000;
+const MAX_HISTORY = 10;
+const SLEW_DURATION = 3000;
+const LARGE_ERROR = 2000;
+
+let anchorUtc = null;
+let anchorMono = null;
+
+let correctionStartMono = null;
+let correctionDuration = 0;
+let correctionAmount = 0;
+
+let lastDisplayedSecond = null;
+let history = [];
+let syncing = false;
+let syncStarted = false;
+let lastSource = "";
+
+const commonZones = [
+    "UTC",
+    "Europe/Berlin",
+    "Europe/London",
+    "Europe/Paris",
+    "Europe/Vienna",
+    "Europe/Zurich",
+    "Europe/Amsterdam",
+    "Europe/Madrid",
+    "Europe/Rome",
+    "Europe/Istanbul",
+    "America/New_York",
+    "America/Chicago",
+    "America/Denver",
+    "America/Los_Angeles",
+    "America/Toronto",
+    "America/Sao_Paulo",
+    "Asia/Dubai",
+    "Asia/Kolkata",
+    "Asia/Singapore",
+    "Asia/Tokyo",
+    "Asia/Seoul",
+    "Asia/Shanghai",
+    "Australia/Sydney",
+    "Pacific/Auckland",
+    "Africa/Cairo",
+    "Africa/Johannesburg"
+];
+
+function initializeZones() {
+    let zones = commonZones;
+
+    if (typeof Intl.supportedValuesOf === "function") {
+        try {
+            zones = ["UTC", ...Intl.supportedValuesOf("timeZone")];
+        } catch {}
+    }
+
+    for (const zone of [...new Set(zones)]) {
+        const option = document.createElement("option");
+        option.value = zone;
+        option.textContent = zone;
+        timezone.appendChild(option);
+    }
+
+    timezone.value = "Europe/Berlin";
+}
+
+function formatTime(epoch, zone) {
+    return new Intl.DateTimeFormat("de-DE", {
+        timeZone: zone,
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+        hourCycle: "h23"
+    }).format(new Date(epoch));
+}
+
+function formatDate(epoch, zone) {
+    return new Intl.DateTimeFormat("de-DE", {
+        timeZone: zone,
+        weekday: "long",
+        day: "2-digit",
+        month: "long",
+        year: "numeric"
+    }).format(new Date(epoch));
+}
+
+function setStatus(message, state) {
+    status.textContent = message;
+    dot.className = "dot " + state;
+}
+
+// Berechnet die UTC-Zeit ausschließlich aus der letzten
+// Servermessung und performance.now(), nicht aus der PC-Uhr.
+function getUtcNow() {
+    if (anchorUtc === null || anchorMono === null) {
+        return null;
+    }
+
+    const nowMono = performance.now();
+    const elapsed = nowMono - anchorMono;
+
+    let correction = 0;
+
+    if (correctionDuration > 0 && correctionStartMono !== null) {
+        const progress = Math.max(
+            0,
+            Math.min(
+                1,
+                (nowMono - correctionStartMono) / correctionDuration
+            )
+        );
+
+        correction = correctionAmount * progress;
+    }
+
+    return anchorUtc + elapsed + correction;
+}
+
+async function requestTime(source) {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 5000);
+    const start = performance.now();
+
+    try {
+        const response = await fetch(source.url, {
+            cache: "no-store",
+            signal: controller.signal
         });
 
-        const dateFormatter = new Intl.DateTimeFormat("de-DE", {
-            timeZone: "Europe/Berlin",
-            weekday: "long",
-            day: "2-digit",
-            month: "long",
-            year: "numeric"
-        });
-
-        const clock = document.getElementById("clock");
-        const date = document.getElementById("date");
-        const historyList = document.getElementById("history-list");
-
-        const history = [];
-        const MAX_HISTORY = 10;
-
-        function updateClock() {
-            const now = new Date();
-
-            const time = timeFormatter.format(now);
-            const formattedDate = dateFormatter.format(now);
-
-            // Große Uhrzeit und Browser-Tab aktualisieren
-            clock.textContent = time;
-            document.title = `${time} | Berlin`;
-
-            // Datum anzeigen
-            date.textContent = formattedDate;
-
-            // Aktuelle Uhrzeit speichern
-            history.unshift({
-                time: time,
-                date: formattedDate
-            });
-
-            // Nur die letzten 10 Sekunden behalten
-            if (history.length > MAX_HISTORY) {
-                history.pop();
-            }
-
-            // Verlauf anzeigen
-            historyList.replaceChildren();
-
-            history.forEach((entry, index) => {
-                const item = document.createElement("li");
-
-                const label = document.createElement("span");
-                label.textContent =
-                    index === 0 ? "Jetzt" :
-                    index === 1 ? "Vor 1 Sekunde" :
-                    `Vor ${index} Sekunden`;
-
-                const value = document.createElement("span");
-                value.className = "time";
-                value.textContent = entry.time;
-
-                item.append(label, value);
-                historyList.appendChild(item);
-            });
+        if (!response.ok) {
+            throw new Error("HTTP " + response.status);
         }
 
-        // Sofort starten und anschließend jede Sekunde aktualisieren
-        updateClock();
-        setInterval(updateClock, 1000);
-    </script>
+        const data = await response.json();
+        const end = performance.now();
+        const rtt = end - start;
+
+        let serverEpoch;
+
+        if (source.type === "timezone") {
+            serverEpoch = Date.parse(data.utc_datetime);
+        } else {
+            serverEpoch = Date.parse(data.dateTime + "Z");
+        }
+
+        if (!Number.isFinite(serverEpoch)) {
+            throw new Error("Ungültiger Zeitstempel");
+        }
+
+        return {
+            name: source.name,
+            rtt,
+            receivedAt: end,
+            utc: serverEpoch + rtt / 2
+        };
+    } finally {
+        clearTimeout(timeout);
+    }
+}
+
+const sources = [
+    {
+        name: "WorldTimeAPI",
+        type: "timezone",
+        url: "https://worldtimeapi.org/api/timezone/Etc/UTC"
+    },
+    {
+        name: "TimeAPI.io",
+        type: "timeapi",
+        url: "https://timeapi.io/api/Time/current/zone?timeZone=UTC"
+    }
+];
+
+function applyCorrection(targetUtc, nowMono) {
+    const currentUtc = getUtcNow();
+
+    if (currentUtc === null) {
+        anchorUtc = targetUtc;
+        anchorMono = nowMono;
+        correctionStartMono = null;
+        correctionDuration = 0;
+        correctionAmount = 0;
+        return;
+    }
+
+    const difference = targetUtc - currentUtc;
+
+    // Große Abweichungen direkt korrigieren.
+    if (Math.abs(difference) > LARGE_ERROR) {
+        anchorUtc = targetUtc;
+        anchorMono = nowMono;
+        correctionStartMono = null;
+        correctionDuration = 0;
+        correctionAmount = 0;
+        return;
+    }
+
+    // Eine laufende Korrektur zunächst in die aktuelle
+    // Zeit übernehmen, damit sie beim Neustart nicht springt.
+    anchorUtc = currentUtc;
+    anchorMono = nowMono;
+
+    correctionStartMono = nowMono;
+    correctionDuration = SLEW_DURATION;
+    correctionAmount = difference;
+}
+
+async function synchronize() {
+    if (syncing) return;
+    syncing = true;
+
+    setStatus("UTC-Zeit wird abgeglichen …", "");
+
+    try {
+        const results = await Promise.allSettled(
+            sources.map(source => requestTime(source))
+        );
+
+        const valid = results
+            .filter(result => result.status === "fulfilled")
+            .map(result => result.value);
+
+        if (valid.length === 0) {
+            throw new Error("Keine UTC-Zeit verfügbar");
+        }
+
+        const nowMono = performance.now();
+
+        // Jede Antwort auf denselben monotonen Zeitpunkt
+        // hochrechnen.
+        const candidates = valid.map(result => ({
+            ...result,
+            utc: result.utc + (nowMono - result.receivedAt)
+        }));
+
+        candidates.sort((a, b) => a.rtt - b.rtt);
+
+        let targetUtc = candidates[0].utc;
+        let sourceLabel = candidates[0].name;
+        let sourcesDisagree = false;
+
+        if (candidates.length >= 2) {
+            const difference = Math.abs(
+                candidates[0].utc - candidates[1].utc
+            );
+
+            if (difference <= 1500) {
+                targetUtc =
+                    (candidates[0].utc + candidates[1].utc) / 2;
+                sourceLabel = "Beide Zeitserver";
+            } else {
+                sourcesDisagree = true;
+                sourceLabel = candidates[0].name +
+                    " (schnellste Quelle)";
+            }
+        }
+
+        applyCorrection(targetUtc, nowMono);
+
+        lastSource = sourceLabel;
+        syncStarted = true;
+
+        setStatus(
+            sourcesDisagree
+                ? "Synchronisiert – Zeitquellen weichen ab"
+                : "UTC erfolgreich synchronisiert",
+            sourcesDisagree ? "" : "online"
+        );
+
+        syncInfo.textContent =
+            "Quelle: " + sourceLabel +
+            " · Antwortzeit: " + candidates[0].rtt.toFixed(0) + " ms" +
+            " · Intervall: 60 Sekunden";
+
+        render();
+    } catch (error) {
+        if (!syncStarted) {
+            setStatus("UTC-Zeit nicht verfügbar", "offline");
+            syncInfo.textContent =
+                "Keine PC-Uhr als Ersatz. Internetverbindung prüfen.";
+        } else {
+            setStatus("Letzte UTC-Zeit läuft weiter", "");
+            syncInfo.textContent =
+                "Erneuter Abgleich fehlgeschlagen · Letzte Quelle: " +
+                lastSource;
+        }
+    } finally {
+        syncing = false;
+    }
+}
+
+function render() {
+    const epoch = getUtcNow();
+
+    if (epoch === null) {
+        clock.textContent = "--:--:--";
+        date.textContent = "Warte auf UTC-Synchronisierung …";
+        document.title = "UTC Clock | Synchronisierung";
+        return;
+    }
+
+    const zone = timezone.value;
+    const time = formatTime(epoch, zone);
+    const second = Math.floor(epoch / 1000);
+
+    clock.textContent = time;
+    date.textContent = formatDate(epoch, zone);
+    zoneLabel.textContent = zone;
+    document.title = time + " | " + zone;
+
+    if (second !== lastDisplayedSecond) {
+        lastDisplayedSecond = second;
+
+        history.unshift({ time });
+        history = history.slice(0, MAX_HISTORY);
+
+        renderHistory();
+    }
+}
+
+function renderHistory() {
+    historyList.replaceChildren();
+
+    history.forEach((entry, index) => {
+        const li = document.createElement("li");
+        const label = document.createElement("span");
+        const time = document.createElement("span");
+
+        label.textContent =
+            index === 0 ? "Jetzt" :
+            index === 1 ? "Vor 1 Sekunde" :
+            "Vor " + index + " Sekunden";
+
+        time.className = "time";
+        time.textContent = entry.time;
+
+        li.append(label, time);
+        historyList.appendChild(li);
+    });
+}
+
+timezone.addEventListener("change", () => {
+    history = [];
+    lastDisplayedSecond = null;
+    render();
+});
+
+document.addEventListener("visibilitychange", () => {
+    if (!document.hidden) synchronize();
+});
+
+window.addEventListener("online", synchronize);
+
+initializeZones();
+render();
+synchronize();
+
+// Live weiterzählen, ohne jede Sekunde das Internet zu fragen.
+setInterval(render, 50);
+
+// Einmal pro Minute mit den UTC-Zeitdiensten synchronisieren.
+setInterval(synchronize, SYNC_INTERVAL);
+</script>
 </body>
 </html>
